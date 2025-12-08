@@ -1,0 +1,30 @@
+version: '3'
+
+rpc:
+  listen: tcp://${RUNNER_RPC_HOST:-127.0.0.1}:${RUNNER_RPC_PORT:-6001}
+
+status:
+  address: ${RUNNER_HEALTHCHECK_IP:-127.0.0.1}:${RUNNER_HEALTHCHECK_PORT:-2115}
+
+server:
+  command: 'php vendor/bin/rr-worker start'
+  relay: pipes
+
+http:
+  address: ${RUNNER_HTTP_HOST:-0.0.0.0}:${RUNNER_HTTP_PORT:-8080}
+  middleware:
+    - gzip
+    - static
+    - headers
+  static:
+    dir: public
+    forbid:
+      - .env
+      - .conf
+      - .ini
+      - .php
+      - .htaccess
+  pool:
+    num_workers: 1
+    supervisor:
+      max_worker_memory: 512

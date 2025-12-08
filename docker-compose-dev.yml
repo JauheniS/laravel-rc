@@ -1,0 +1,51 @@
+services:
+  laravel-rc:
+    build:
+      context: docker
+    container_name: laravel-rc
+    ports:
+      - "[::]:${PHP_SUPERVISOR_PORT:-9009}:9009"
+      - "[::]:${RUNNER_HTTP_PORT:-8080}:8080"
+      - "[::]:${RUNNER_RPC_PORT:-6001}:6001"
+      - "[::]:${RUNNER_HEALTHCHECK_PORT:-2115}:2115"
+    restart: always
+    command: sh -c "docker-php-entrypoint supervisord -c /etc/supervisor/supervisord.conf && tail -f /var/log/supervisor/supervisord.log"
+    platform: linux/amd64
+    tty: true
+    stdin_open: true
+    depends_on:
+      - pgsql
+    networks:
+      - api-network
+    volumes:
+      - ./app:/app
+      - ./docker/supervisord:/etc/supervisor/conf.d
+    dns:
+      - ${DOCKER_DNS_1:-1.1.1.1}
+      - ${DOCKER_DNS_2:-8.8.8.8}
+
+  pgsql:
+    image: postgres:latest
+    container_name: pgsql
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-cycle}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-f1llTh1s0ut}
+      POSTGRES_DB: ${DB_DATABASE:-laravelrc}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    networks:
+      - api-network
+
+networks:
+  api-network:
+    driver: bridge
+
+volumes:
+  pgdata:
