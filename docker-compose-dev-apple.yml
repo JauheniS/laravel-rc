@@ -46,3 +46,6 @@ services:
 networks:
   api-network:
     driver: bridge
+
+volumes:
+  pgdata:
